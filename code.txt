@@ -1,0 +1,147 @@
+**Python Codes**
+
+import pandas as pd
+import numpy as np
+from statsmodels.tsa.stattools import adfuller, kpss
+
+# Read the data from the CSV file containing daily-aggregated data
+data = pd.read_csv('coursework_r.csv')
+
+# Extract the count column from the data
+count = data['Count']
+
+
+# Perform Dickey-Fuller test
+adf_stat, adf_p_value, _, _, _, _ = adfuller(count)
+alpha = 0.05
+
+print("Dickey-Fuller Test:")
+print(f"ADF statistic: {adf_stat}")
+print(f"p-value: {adf_p_value}")
+if adf_p_value < alpha:
+    print("Null hypothesis rejected. The data is stationary based on the Dickey-Fuller test.")
+else:
+    print("Null hypothesis not rejected. The data is non-stationary based on the Dickey-Fuller test.")
+print()
+
+
+# Perform KPSS test
+kpss_stat, kpss_p_value, _, _ = kpss(count)
+
+print("KPSS Test:")
+print(f"KPSS statistic: {kpss_stat}")
+print(f"p-value: {kpss_p_value}")
+if kpss_p_value > alpha:
+    print("Null hypothesis not rejected. The data is stationary based on the KPSS test.")
+else:
+    print("Null hypothesis rejected. The data is non-stationary based on the KPSS test.")
+
+
+
+**R Codes**
+
+# Load libraries
+library(forecast)
+library(stat)
+
+# Read the CSV file containing daily-aggregated data
+data <- read.csv("coursework_r.csv")
+
+# Convert the 'Count' column to a time series object
+ts_data <- ts(data$Count, frequency = 7) # Weekly (7-day) seasonality
+
+
+
+# Plot ACF and PACF graphs
+
+# Extract the "Count" values
+count <- data$Count
+
+# Plot the ACF
+acf(count, lag.max = 20, main = "Autocorrelation Function (ACF)")
+acf(count, lag.max = 214, main = "Autocorrelation Function (ACF)")
+
+
+# Plot the PACF
+pacf(count, lag.max = 20, main = "Partial Autocorrelation Function (PACF)")
+pacf(count, lag.max = 214, main = "Partial Autocorrelation Function (PACF)")
+
+
+
+
+# ARIMA model using auto.arima() function
+
+# Apply auto.arima() to determine the optimal ARIMA parameters and print the model summary
+model_1 <- auto.arima(ts_data)
+print(summary(model_1))
+
+# Forecast the next 2 months (61 days) using the ARIMA model
+forecast_values <- forecast(model_1, h = 61)
+print(forecast_values)
+
+# Calculate residuals standard deviation
+residuals_1 <- residuals(model_1)
+residuals_1_sd <- sd(residuals_1)
+print(residuals_1_sd)
+
+# Plot the historical data and forecasted values
+plot(forecast_values, main = "ARIMA(1,0,2)(1,1,2)[7] Forecast", xlab = "Time", ylab = "Count")
+lines(ts_data, col = "blue")
+lines(forecast_values$mean, col = "red")
+legend("topleft", legend = c("Historical Data", "Forecast"), col = c("blue", "red"), lty = 1, bty = "n")
+
+
+
+# ARIMA(1,1,5)(1,1,2)[7] model
+
+# Define parameters for the model
+model_3 <- arima(ts_data, order = c(1, 1, 5), seasonal = list(order = c(1, 1, 2), period = 7))
+print(summary(model_3))
+
+# Forecast the next 2 months (61 days) using the ARIMA model
+forecast_values_3 <- forecast(model_3, h = 61)
+print(forecast_values_3)
+
+# Plot the historical data and forecasted values
+plot(forecast_values_3, main = "ARIMA(1,1,5)(1,1,2)[7] Forecast", xlab = "Time", ylab = "Count")
+lines(ts_data, col = "blue")
+lines(forecast_values_3$mean, col = "red")
+legend("topleft", legend = c("Historical Data", "Forecast"), col = c("blue", "red"), lty = 1, bty = "n")
+
+# Calculate residuals standard deviation
+residuals_3 <- residuals(model_3)
+residuals_3_sd <- sd(residuals_3)
+print(residuals_3_sd)
+
+
+
+# Ljung-Box test and Portmanteau_test
+
+# Ljung-Box test
+residuals <- residuals(model_1)
+ljung_box_test <- Box.test(residuals, lag = 20, type = "Ljung-Box")
+print(ljung_box_test)
+
+# Portmanteau test
+portmanteau_test <- Box.test(residuals, lag = 20, type = "Box-Pierce")
+print(portmanteau_test)
+
+
+
+# Holt's Winters's Multiplicative and Additive models
+
+# Build models
+hw_multiplicative <- HoltWinters(ts_data, seasonal = "multiplicative")
+hw_additive <- HoltWinters(ts_data, seasonal = "additive")
+
+# Forecast the next 2 months (61 days)
+forecast_multiplicative <- forecast(hw_multiplicative, h = 61)
+forecast_additive <- forecast(hw_additive, h = 61)
+
+print(forecast_multiplicative)
+print(forecast_additive)
+
+# Plot model forecasts
+plot(forecast_multiplicative, main = "Holt's Winter's Multiplicative Model Forecast", xlab = "Time", ylab = "Count")
+plot(forecast_additive, main = "Holt's Winter's Additive Model Forecast", xlab = "Time", ylab = "Count")
+
